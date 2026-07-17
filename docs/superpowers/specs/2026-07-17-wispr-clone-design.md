@@ -43,7 +43,7 @@ Right-Cmd up  ──► Transcriber (whisper.cpp large-v3-turbo, lang autodetect
 - **App.swift** — NSApplication bootstrap, menu bar item (NSStatusItem), mode toggle, permissions onboarding (Accessibility + Microphone).
 - **HotkeyMonitor.swift** — CGEventTap on `flagsChanged` for Right-Cmd (keycode 54). Emits `startRecording` / `stopRecording`. Re-enables tap if system disables it. Ignores holds < 0.3s.
 - **Recorder.swift** — AVAudioEngine input tap → 16kHz mono Float32 buffer. Hard cap ~2 min per dictation.
-- **Transcriber.swift** — wraps whisper.cpp C API (vendored via SwiftPM dependency on ggml-org/whisper.cpp or a local checkout + C shim). Lazy-load model, idle-unload timer (10 min). Language autodetect.
+- **Transcriber (WhisperServer.swift)** — manages a `whisper-server` child process (installed via `brew install whisper-cpp`): spawn with the turbo model on first use (lazy load), POST recorded WAV to `http://127.0.0.1:8642/inference`, terminate after 10 min idle (idle-unload). Language autodetect (`--language auto`). Rationale vs. embedding the whisper.cpp C API: no C++/Metal compilation on a CLT-only machine, same warm-model behavior, plain HTTP from Swift.
 - **SmartCleaner.swift** — protocol `Cleaner` with two impls:
   - `LLMCleaner`: POST to `http://localhost:11434/api/chat` (Ollama, `qwen2.5:3b`), fixed system prompt: remove fillers, fix punctuation/casing, translate any Chinese to English, honor spoken meta-commands ("give me the following in English:"), output cleaned English text only — no commentary. Timeout ~10s → fallback.
   - `RuleCleaner`: regex strip of fillers (um, uh, like, you know…), whitespace/punctuation tidy. Chinese passes through untranslated (documented limitation of Rules mode).
