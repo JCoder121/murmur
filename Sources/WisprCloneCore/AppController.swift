@@ -9,6 +9,8 @@ public final class AppController: NSObject {
     private var statusItem: NSStatusItem!
     private var smartItem: NSMenuItem!
     private var rulesItem: NSMenuItem!
+    private var langAutoItem: NSMenuItem!
+    private var langEnItem: NSMenuItem!
     private var idleTimer: Timer?
     private var recording = false
     private var processing = false
@@ -46,6 +48,13 @@ public final class AppController: NSObject {
         menu.addItem(smartItem)
         menu.addItem(rulesItem)
         menu.addItem(.separator())
+        langAutoItem = NSMenuItem(title: "Language: Auto (EN+中文)", action: #selector(pickLangAuto), keyEquivalent: "")
+        langEnItem = NSMenuItem(title: "Language: English (faster)", action: #selector(pickLangEn), keyEquivalent: "")
+        langAutoItem.target = self
+        langEnItem.target = self
+        menu.addItem(langAutoItem)
+        menu.addItem(langEnItem)
+        menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Quit WisprClone", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
         refreshChecks()
@@ -53,10 +62,14 @@ public final class AppController: NSObject {
 
     @objc private func pickSmart() { Settings.mode = .smart; refreshChecks() }
     @objc private func pickRules() { Settings.mode = .rules; refreshChecks() }
+    @objc private func pickLangAuto() { Settings.language = .auto; refreshChecks() }
+    @objc private func pickLangEn() { Settings.language = .en; refreshChecks() }
 
     private func refreshChecks() {
         smartItem.state = Settings.mode == .smart ? .on : .off
         rulesItem.state = Settings.mode == .rules ? .on : .off
+        langAutoItem.state = Settings.language == .auto ? .on : .off
+        langEnItem.state = Settings.language == .en ? .on : .off
     }
 
     private func makeCleaner() -> Cleaner {
@@ -119,7 +132,7 @@ public final class AppController: NSObject {
             }
             do {
                 try await self.whisper.ensureRunning()
-                let raw = try await self.whisper.transcribe(wav: wav)
+                let raw = try await self.whisper.transcribe(wav: wav, language: Settings.language)
                 try? FileManager.default.removeItem(at: wav)
                 guard !raw.isEmpty else {
                     await MainActor.run { self.overlay.hide() }

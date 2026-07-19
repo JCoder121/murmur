@@ -68,7 +68,7 @@ public final class WhisperServer {
         return http.statusCode == 200
     }
 
-    public func transcribe(wav: URL) async throws -> String {
+    public func transcribe(wav: URL, language: Language = .auto) async throws -> String {
         let boundary = "wisprclone-\(UUID().uuidString)"
         var req = URLRequest(url: Self.base.appendingPathComponent("inference"))
         req.httpMethod = "POST"
@@ -83,6 +83,7 @@ public final class WhisperServer {
         body.append(try Data(contentsOf: wav))
         body.append(Data("\r\n".utf8))
         field("response_format", "json")
+        field("language", language.rawValue)  // overrides the server's --language flag
         body.append(Data("--\(boundary)--\r\n".utf8))
         req.httpBody = body
 
