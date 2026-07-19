@@ -83,7 +83,9 @@ public final class AppController: NSObject {
         Task { try? await whisper.ensureRunning() }  // warm up while user speaks
         do { try recorder.start() } catch {
             recording = false
+            statusItem.button?.title = "🎤"
             overlay.showWarning("Microphone error")
+            scheduleIdleUnload()
         }
     }
 
@@ -95,6 +97,7 @@ public final class AppController: NSObject {
         let wav = (try? recorder.stop()) ?? nil
         guard held >= 0.3, let wav else {
             overlay.hide()
+            scheduleIdleUnload()
             return
         }
         overlay.showProcessing()
@@ -111,6 +114,10 @@ public final class AppController: NSObject {
                     return
                 }
                 let cleaned = await cleaner.clean(raw)
+                guard !cleaned.isEmpty else {
+                    await MainActor.run { self.overlay.hide() }
+                    return
+                }
                 await MainActor.run {
                     Inserter.insert(cleaned)
                     self.overlay.hide()

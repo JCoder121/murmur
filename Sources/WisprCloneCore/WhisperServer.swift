@@ -6,6 +6,7 @@ public final class WhisperServer {
     private static let base = URL(string: "http://127.0.0.1:8642")!
 
     private var process: Process?
+    private var startTask: Task<Void, Swift.Error>?
 
     public init() {}
 
@@ -25,27 +26,39 @@ public final class WhisperServer {
         }
     }
 
+    @MainActor
     public func ensureRunning() async throws {
-        if process?.isRunning == true, await healthy() { return }
-        guard let bin = Self.binaryCandidates.first(where: { FileManager.default.fileExists(atPath: $0) })
-        else { throw Error.binaryMissing }
-        guard isModelInstalled else { throw Error.modelMissing }
+        if let t = startTask { return try await t.value }
+        let t = Task<Void, Swift.Error> {
+            if process?.isRunning == true, await healthy() { return }
+            guard let bin = Self.binaryCandidates.first(where: { FileManager.default.fileExists(atPath: $0) })
+            else { throw Error.binaryMissing }
+            guard isModelInstalled else { throw Error.modelMissing }
 
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: bin)
-        p.arguments = ["-m", Self.modelPath, "--host", "127.0.0.1", "--port", "8642", "--language", "auto"]
-        p.standardOutput = FileHandle.nullDevice
-        p.standardError = FileHandle.nullDevice
-        try p.run()
-        process = p
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: bin)
+            p.arguments = ["-m", Self.modelPath, "--host", "127.0.0.1", "--port", "8642", "--language", "auto"]
+            p.standardOutput = FileHandle.nullDevice
+            p.standardError = FileHandle.nullDevice
+            try p.run()
+            process = p
 
-        for _ in 0..<60 {  // up to 30s for first model load
-            try await Task.sleep(nanoseconds: 500_000_000)
-            if await healthy() { return }
-            if !p.isRunning { break }
+            for _ in 0..<60 {  // up to 30s for first model load
+                try await Task.sleep(nanoseconds: 500_000_000)
+                if await healthy() { return }
+                if !p.isRunning { break }
+            }
+            stop()
+            throw Error.startTimeout
         }
-        stop()
-        throw Error.startTimeout
+        startTask = t
+        do {
+            try await t.value
+            startTask = nil
+        } catch {
+            startTask = nil
+            throw error
+        }
     }
 
     private func healthy() async -> Bool {
@@ -79,8 +92,10 @@ public final class WhisperServer {
         return WhisperParse.isNoise(text) ? "" : text
     }
 
+    @MainActor
     public func stop() {
         process?.terminate()
         process = nil
+        startTask = nil
     }
 }
