@@ -3,12 +3,19 @@ import CoreGraphics
 
 public final class HotkeyMonitor {
     public var onPress: (() -> Void)?
-    public var onRelease: ((TimeInterval) -> Void)?
+    /// Fires once per hold when Right-Option joins the chord (or was already
+    /// down at press) — the moment to start warming the smart pipeline.
+    public var onSmartEngage: (() -> Void)?
+    /// smart latches true if Right-Option was held at any point during the hold,
+    /// so releasing the two keys in either order still counts as the chord.
+    public var onRelease: ((_ held: TimeInterval, _ smart: Bool) -> Void)?
 
     private var tap: CFMachPort?
     private var pressedAt: Date?
+    private var smartLatched = false
     private static let rightCmdKeycode: Int64 = 54
     private static let rightCmdDeviceMask: UInt64 = 0x10  // NX_DEVICERCMDKEYMASK: right-Cmd's own device bit
+    private static let rightOptDeviceMask: UInt64 = 0x40  // NX_DEVICERALTKEYMASK: right-Option's own device bit
 
     public init() {}
 
@@ -41,14 +48,25 @@ public final class HotkeyMonitor {
             if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
             return
         }
+        let optDown = event.flags.rawValue & Self.rightOptDeviceMask != 0
+        if pressedAt != nil, optDown, !smartLatched {
+            smartLatched = true
+            onSmartEngage?()
+        }
         guard event.getIntegerValueField(.keyboardEventKeycode) == Self.rightCmdKeycode else { return }
         let isDown = event.flags.rawValue & Self.rightCmdDeviceMask != 0
         if isDown, pressedAt == nil {
             pressedAt = Date()
             onPress?()
+            if optDown {  // option was already held when cmd went down
+                smartLatched = true
+                onSmartEngage?()
+            }
         } else if !isDown, let start = pressedAt {
             pressedAt = nil
-            onRelease?(Date().timeIntervalSince(start))
+            let smart = smartLatched
+            smartLatched = false
+            onRelease?(Date().timeIntervalSince(start), smart)
         }
     }
 }

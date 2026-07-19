@@ -26,9 +26,12 @@ On first run grant **Microphone** and **Accessibility** permissions
 
 ## Use
 
-- Hold **Right-Cmd** → speak → release. Text appears at your cursor.
-- Menu-bar 🎤 → switch **Smart mode** (LLM cleanup, zh→en translation) vs
-  **Rules mode** (instant, filler-stripping only, no translation).
+- Hold **Right-Cmd** → speak → release: **Rules mode** (instant regex cleanup,
+  EN only). Text appears at your cursor.
+- Hold **Right-Cmd + Right-Opt** → **Smart mode** (LLM cleanup, zh→en
+  translation, symbol conversion). Add Right-Opt any time during the hold —
+  the menu-bar icon turns 🟣 and qwen starts loading immediately, so the
+  ~7.5s cold load overlaps your speech instead of following it.
 - Menu-bar 🎤 → **Language: Auto (EN+中文)** vs **English (faster)**.
   Auto-detect costs a full extra whisper pass (~4.1s vs ~2.1s measured on M1);
   pick English if you're not dictating Mandarin.
@@ -36,6 +39,13 @@ On first run grant **Microphone** and **Accessibility** permissions
   (start it with `ollama serve`).
 - Say "give me the following in English: {Chinese}" to dictate Chinese and
   insert the English translation.
+- **Personal dictionary**: put your proper nouns (project names, tools, people)
+  one per line in `~/Library/Application Support/WisprClone/dictionary.txt`
+  (`#` comments OK). Terms bias whisper's transcription in **both modes** and
+  qwen's spelling in Smart mode. Re-read on every dictation — no relaunch.
+- Smart mode adapts tone to the destination app (chat apps → casual,
+  terminals/editors → verbatim, everything else → prose) using the frontmost
+  app name + window title captured at key-press. No field content is read.
 
 ## Notes
 
@@ -59,20 +69,57 @@ make bundle   # build dist/WisprClone.app without launching
 
 Manual E2E run on the target MacBook Air M1 (8GB) — see `E2E-CHECKLIST.md`.
 
-- Items 1–9, 11–13: **PASS** (setup, rules mode, smart mode incl. zh→en,
-  Ollama-down fallback, clipboard restore, busy/too-short pills, quit cleanup).
-- Item 10 (10-min idle unload): **deferred** — timer resets on every dictation
-  and the app was in constant use during the run; unload path is unit-covered
-  and quit cleanup (item 11) passed.
+- All 13 items: **PASS** (setup, rules mode, smart mode incl. zh→en,
+  Ollama-down fallback, clipboard restore, busy/too-short pills, quit cleanup,
+  10-min idle unload verified by background watcher).
 - Found & fixed during the run: stale-instance hotkey failure after rebuild
   (ad-hoc TCC invalidation → now self-signed), 2x latency from language
   auto-detect (→ language toggle).
 
 ## Future ideas (v2+)
 
-- **Context injection** (planned next): feed frontmost-app name, surrounding
-  text, and a personal dictionary into whisper + the cleanup prompt.
+- ~~Context injection~~ — shipped in v2 (dictionary → whisper `initial_prompt`,
+  app context + tone buckets → cleanup prompt). Extend the bucket map in
+  `AppContext.swift` to teach it new chat/code apps.
 - Stream-draft overlay via a small whisper model while speaking; token-streamed
   overlay for Smart mode. Deferred until better hardware — both keep extra
   models resident, which fights real workloads on 8GB.
-- Live correction of already-pasted text (Wispr-style): intentionally skipped.
+- Live correction of already-pasted text (Wispr-style): deferred indefinitely.
+
+### Open design questions
+
+Things I'm actively thinking about for the deferred features:
+
+**Stream-draft overlay** (small model drafts live, large model finalizes)
+- *Stable-prefix rendering*: overlapping windows make the draft's tail
+  flicker as re-decodes revise it. Only render tokens that survive N
+  consecutive windows? What N trades freshness against jitter?
+- *Compute budget*: total streaming cost scales ~1/step-size. What's the
+  largest step that still feels "live" (~1s?), and does base.en hold
+  real-time factor < 1 on an M1 under thermal throttle?
+- *Draft/final reconciliation*: when large-v3-turbo disagrees with the
+  displayed draft, how do you swap without a jarring rewrite? Could
+  draft-vs-final token agreement (or decoder logprobs) let confident
+  dictations skip the final pass entirely?
+- *Resource arbitration*: the GPU is shared with real workloads (browser,
+  renders). How do you detect contention and degrade — pause streaming and
+  fall back to v1's batch path — without user-visible mode churn?
+- *VAD gating*: skip encoding silent windows to reclaim most of the
+  streaming overhead during pauses?
+
+**Live correction of inserted text**
+- *Edit anchoring*: after pasting, the user may type or move the cursor.
+  How do you re-locate the inserted range for replacement — AX marked
+  ranges, content diff anchors, or give up beyond an edit distance?
+- *Undo semantics*: every programmatic replacement pushes onto the target
+  app's undo stack. Can corrections coalesce so Cmd-Z undoes the whole
+  dictation, not one correction hop?
+- *AX heterogeneity*: native NSTextView, Electron, and web content expose
+  wildly different AX editing capability. Capability-detect per app and
+  maintain a fallback matrix, or allowlist known-good apps?
+- *Concurrent-typing races*: if the user keeps typing while a correction
+  lands, who wins? Abort rules vs. operational-transform-style rebasing of
+  the correction against their edits.
+- *Prefix-stable generation*: can the cleanup LLM be constrained to
+  append-mostly output (rather than free rewrites) so corrections shrink to
+  small suffix patches?

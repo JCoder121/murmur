@@ -7,13 +7,13 @@ public final class AppController: NSObject {
     private let whisper = WhisperServer()
     private let overlay = Overlay()
     private var statusItem: NSStatusItem!
-    private var smartItem: NSMenuItem!
-    private var rulesItem: NSMenuItem!
     private var langAutoItem: NSMenuItem!
     private var langEnItem: NSMenuItem!
     private var idleTimer: Timer?
     private var recording = false
     private var processing = false
+    private let dictionary = PersonalDictionary()
+    private var dictationContext: AppContext?
 
     public func start() {
         buildMenu()
@@ -26,7 +26,8 @@ public final class AppController: NSObject {
             DispatchQueue.main.async { self?.overlay.updateLevel(level) }
         }
         hotkey.onPress = { [weak self] in self?.hotkeyPressed() }
-        hotkey.onRelease = { [weak self] held in self?.hotkeyReleased(held: held) }
+        hotkey.onSmartEngage = { [weak self] in self?.smartEngaged() }
+        hotkey.onRelease = { [weak self] held, smart in self?.hotkeyReleased(held: held, smart: smart) }
         if !hotkey.start() {
             overlay.showWarning("Grant Accessibility, then relaunch")
         }
@@ -41,12 +42,9 @@ public final class AppController: NSObject {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.title = "🎤"
         let menu = NSMenu()
-        smartItem = NSMenuItem(title: "Smart mode (LLM + translate)", action: #selector(pickSmart), keyEquivalent: "")
-        rulesItem = NSMenuItem(title: "Rules mode (instant, EN only)", action: #selector(pickRules), keyEquivalent: "")
-        smartItem.target = self
-        rulesItem.target = self
-        menu.addItem(smartItem)
-        menu.addItem(rulesItem)
+        // Hotkey legend — no action, so the items render disabled.
+        menu.addItem(NSMenuItem(title: "Hold ⌘ (right) — Rules mode", action: nil, keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Hold ⌘+⌥ (right) — Smart mode", action: nil, keyEquivalent: ""))
         menu.addItem(.separator())
         langAutoItem = NSMenuItem(title: "Language: Auto (EN+中文)", action: #selector(pickLangAuto), keyEquivalent: "")
         langEnItem = NSMenuItem(title: "Language: English (faster)", action: #selector(pickLangEn), keyEquivalent: "")
@@ -60,30 +58,27 @@ public final class AppController: NSObject {
         refreshChecks()
     }
 
-    @objc private func pickSmart() { Settings.mode = .smart; refreshChecks() }
-    @objc private func pickRules() { Settings.mode = .rules; refreshChecks() }
     @objc private func pickLangAuto() { Settings.language = .auto; refreshChecks() }
     @objc private func pickLangEn() { Settings.language = .en; refreshChecks() }
 
     private func refreshChecks() {
-        smartItem.state = Settings.mode == .smart ? .on : .off
-        rulesItem.state = Settings.mode == .rules ? .on : .off
         langAutoItem.state = Settings.language == .auto ? .on : .off
         langEnItem.state = Settings.language == .en ? .on : .off
     }
 
-    private func makeCleaner() -> Cleaner {
+    private func makeCleaner(smart: Bool) -> Cleaner {
         let rules = RuleCleaner()
-        switch Settings.mode {
-        case .rules:
-            return rules
-        case .smart:
-            return OllamaCleaner(fallback: rules, onFallback: {
+        guard smart else { return rules }
+        return OllamaCleaner(
+            fallback: rules,
+            onFallback: {
                 DispatchQueue.main.async { [weak self] in
                     self?.overlay.showWarning("Ollama down — used rules mode")
                 }
+            },
+            contextProvider: { [weak self] in
+                (self?.dictationContext, self?.dictionary.terms ?? [])
             })
-        }
     }
 
     // MARK: dictation pipeline
@@ -91,6 +86,7 @@ public final class AppController: NSObject {
     private func hotkeyPressed() {
         guard !recording else { return }
         guard !processing else { overlay.showWarning("Busy…"); return }
+        dictationContext = AppContext.capture()  // frontmost app now = paste target
         recording = true
         idleTimer?.invalidate()
         statusItem.button?.title = "🔴"
@@ -104,7 +100,13 @@ public final class AppController: NSObject {
         }
     }
 
-    private func hotkeyReleased(held: TimeInterval) {
+    private func smartEngaged() {
+        guard recording else { return }
+        statusItem.button?.title = "🟣"  // chord active: this dictation is Smart
+        OllamaCleaner.warmUp()          // hide qwen's cold load behind speech + whisper
+    }
+
+    private func hotkeyReleased(held: TimeInterval, smart: Bool) {
         guard recording else { return }
         recording = false
         statusItem.button?.title = "🎤"
@@ -120,7 +122,7 @@ public final class AppController: NSObject {
             return
         }
         overlay.showProcessing()
-        let cleaner = makeCleaner()
+        let cleaner = makeCleaner(smart: smart)
         processing = true
         Task { [weak self] in
             guard let self else { return }
@@ -132,7 +134,8 @@ public final class AppController: NSObject {
             }
             do {
                 try await self.whisper.ensureRunning()
-                let raw = try await self.whisper.transcribe(wav: wav, language: Settings.language)
+                let raw = try await self.whisper.transcribe(
+                    wav: wav, language: Settings.language, prompt: self.dictionary.initialPrompt)
                 try? FileManager.default.removeItem(at: wav)
                 guard !raw.isEmpty else {
                     await MainActor.run { self.overlay.hide() }

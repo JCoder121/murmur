@@ -68,29 +68,34 @@ public final class WhisperServer {
         return http.statusCode == 200
     }
 
-    public func transcribe(wav: URL, language: Language = .auto) async throws -> String {
+    public func transcribe(wav: URL, language: Language = .auto, prompt: String = "") async throws -> String {
         let boundary = "wisprclone-\(UUID().uuidString)"
         var req = URLRequest(url: Self.base.appendingPathComponent("inference"))
         req.httpMethod = "POST"
         req.timeoutInterval = 120
         req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-
-        var body = Data()
-        func field(_ name: String, _ value: String) {
-            body.append(Data("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"\r\n\r\n\(value)\r\n".utf8))
-        }
-        body.append(Data("--\(boundary)\r\nContent-Disposition: form-data; name=\"file\"; filename=\"audio.wav\"\r\nContent-Type: audio/wav\r\n\r\n".utf8))
-        body.append(try Data(contentsOf: wav))
-        body.append(Data("\r\n".utf8))
-        field("response_format", "json")
-        field("language", language.rawValue)  // overrides the server's --language flag
-        body.append(Data("--\(boundary)--\r\n".utf8))
-        req.httpBody = body
+        req.httpBody = Self.multipartBody(
+            boundary: boundary, wavData: try Data(contentsOf: wav), language: language, prompt: prompt)
 
         let (data, resp) = try await URLSession.shared.data(for: req)
         guard (resp as? HTTPURLResponse)?.statusCode == 200 else { throw Error.badResponse }
         let text = try WhisperParse.text(from: data)
         return WhisperParse.isNoise(text) ? "" : text
+    }
+
+    static func multipartBody(boundary: String, wavData: Data, language: Language, prompt: String) -> Data {
+        var body = Data()
+        func field(_ name: String, _ value: String) {
+            body.append(Data("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"\r\n\r\n\(value)\r\n".utf8))
+        }
+        body.append(Data("--\(boundary)\r\nContent-Disposition: form-data; name=\"file\"; filename=\"audio.wav\"\r\nContent-Type: audio/wav\r\n\r\n".utf8))
+        body.append(wavData)
+        body.append(Data("\r\n".utf8))
+        field("response_format", "json")
+        field("language", language.rawValue)  // overrides the server's --language flag
+        if !prompt.isEmpty { field("prompt", prompt) }  // whisper initial_prompt: biases decoding toward dictionary terms
+        body.append(Data("--\(boundary)--\r\n".utf8))
+        return body
     }
 
     @MainActor
