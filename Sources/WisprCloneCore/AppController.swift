@@ -11,6 +11,7 @@ public final class AppController: NSObject {
     private var rulesItem: NSMenuItem!
     private var idleTimer: Timer?
     private var recording = false
+    private var processing = false
 
     public func start() {
         buildMenu()
@@ -76,6 +77,7 @@ public final class AppController: NSObject {
 
     private func hotkeyPressed() {
         guard !recording else { return }
+        guard !processing else { overlay.showWarning("Busy…"); return }
         recording = true
         idleTimer?.invalidate()
         statusItem.button?.title = "🔴"
@@ -96,15 +98,25 @@ public final class AppController: NSObject {
         // stop() is `throws -> URL?`, so `try?` yields URL?? — flatten with `?? nil`.
         let wav = (try? recorder.stop()) ?? nil
         guard held >= 0.3, let wav else {
-            overlay.hide()
+            if held >= 0.3 {
+                overlay.showWarning("Too short")
+            } else {
+                overlay.hide()
+            }
             scheduleIdleUnload()
             return
         }
         overlay.showProcessing()
         let cleaner = makeCleaner()
+        processing = true
         Task { [weak self] in
             guard let self else { return }
-            defer { Task { @MainActor in self.scheduleIdleUnload() } }
+            defer {
+                Task { @MainActor in
+                    self.processing = false
+                    self.scheduleIdleUnload()
+                }
+            }
             do {
                 try await self.whisper.ensureRunning()
                 let raw = try await self.whisper.transcribe(wav: wav)
@@ -130,6 +142,8 @@ public final class AppController: NSObject {
             }
         }
     }
+
+    public func stopWhisper() { whisper.stop() }
 
     private func scheduleIdleUnload() {
         idleTimer?.invalidate()

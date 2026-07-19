@@ -32,11 +32,11 @@ else
   confirm "Install whisper-cpp via brew (~15MB)?" && $BREW install whisper-cpp
 fi
 
-# 2. Whisper model (~574MB)
+# 2. Whisper model (~547MB)
 if [[ -f "$MODEL_FILE" ]]; then
   echo "✓ whisper model already present"
 else
-  if confirm "Download whisper large-v3-turbo q5_0 model (~574MB)?"; then
+  if confirm "Download whisper large-v3-turbo q5_0 model (~547MB)?"; then
     mkdir -p "$MODEL_DIR"
     curl -L --progress-bar -o "$MODEL_FILE" "$MODEL_URL"
   fi

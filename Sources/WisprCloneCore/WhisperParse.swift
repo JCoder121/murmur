@@ -11,6 +11,6 @@ public enum WhisperParse {
     public static func isNoise(_ s: String) -> Bool {
         let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
         if t.isEmpty { return true }
-        return t.range(of: #"^[\[(][^\])]*[\])]$"#, options: .regularExpression) != nil
+        return t.range(of: #"^(\s*[\[(][^\])]*[\])]\s*)+$"#, options: .regularExpression) != nil
     }
 }

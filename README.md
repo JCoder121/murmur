@@ -10,7 +10,7 @@ translation, with an instant rules-only fallback mode.
 ## Setup
 
 ```bash
-./scripts/setup.sh   # installs whisper-cpp (~15MB), whisper model (~574MB),
+./scripts/setup.sh   # installs whisper-cpp (~15MB), whisper model (~547MB),
                      # optionally Ollama + qwen2.5:3b (~2.5GB, Smart mode only)
 make run             # builds dist/WisprClone.app and opens it
 ```

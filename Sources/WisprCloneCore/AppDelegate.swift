@@ -9,4 +9,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         controller = AppController()
         controller.start()
     }
+
+    public func applicationWillTerminate(_ notification: Notification) {
+        controller.stopWhisper()
+    }
 }

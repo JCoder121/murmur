@@ -94,8 +94,19 @@ public final class WhisperServer {
 
     @MainActor
     public func stop() {
-        process?.terminate()
+        let p = process
+        p?.terminate()
         process = nil
         startTask = nil
+        // Bounded wait off the main actor so the port frees before a restart,
+        // without blocking synchronously for up to 2s.
+        if let p {
+            Task.detached {
+                for _ in 0..<20 {
+                    if !p.isRunning { return }
+                    try? await Task.sleep(nanoseconds: 100_000_000)
+                }
+            }
+        }
     }
 }

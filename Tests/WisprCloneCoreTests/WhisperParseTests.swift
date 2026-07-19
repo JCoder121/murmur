@@ -16,6 +16,7 @@ final class WhisperParseTests: XCTestCase {
         XCTAssertTrue(WhisperParse.isNoise("[BLANK_AUDIO]"))
         XCTAssertTrue(WhisperParse.isNoise("(wind blowing)"))
         XCTAssertTrue(WhisperParse.isNoise("[Music]"))
+        XCTAssertTrue(WhisperParse.isNoise("[Music] [Applause]"))
         XCTAssertFalse(WhisperParse.isNoise("Hello there"))
     }
 }
