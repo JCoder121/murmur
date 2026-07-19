@@ -67,4 +67,42 @@ Manual E2E run on the target MacBook Air M1 (8GB) — see `E2E-CHECKLIST.md`.
 - Stream-draft overlay via a small whisper model while speaking; token-streamed
   overlay for Smart mode. Deferred until better hardware — both keep extra
   models resident, which fights real workloads on 8GB.
-- Live correction of already-pasted text (Wispr-style): intentionally skipped.
+- Live correction of already-pasted text (Wispr-style): deferred indefinitely.
+
+### Open design questions
+
+Things I'm actively thinking about for the deferred features:
+
+**Stream-draft overlay** (small model drafts live, large model finalizes)
+- *Stable-prefix rendering*: overlapping windows make the draft's tail
+  flicker as re-decodes revise it. Only render tokens that survive N
+  consecutive windows? What N trades freshness against jitter?
+- *Compute budget*: total streaming cost scales ~1/step-size. What's the
+  largest step that still feels "live" (~1s?), and does base.en hold
+  real-time factor < 1 on an M1 under thermal throttle?
+- *Draft/final reconciliation*: when large-v3-turbo disagrees with the
+  displayed draft, how do you swap without a jarring rewrite? Could
+  draft-vs-final token agreement (or decoder logprobs) let confident
+  dictations skip the final pass entirely?
+- *Resource arbitration*: the GPU is shared with real workloads (browser,
+  renders). How do you detect contention and degrade — pause streaming and
+  fall back to v1's batch path — without user-visible mode churn?
+- *VAD gating*: skip encoding silent windows to reclaim most of the
+  streaming overhead during pauses?
+
+**Live correction of inserted text**
+- *Edit anchoring*: after pasting, the user may type or move the cursor.
+  How do you re-locate the inserted range for replacement — AX marked
+  ranges, content diff anchors, or give up beyond an edit distance?
+- *Undo semantics*: every programmatic replacement pushes onto the target
+  app's undo stack. Can corrections coalesce so Cmd-Z undoes the whole
+  dictation, not one correction hop?
+- *AX heterogeneity*: native NSTextView, Electron, and web content expose
+  wildly different AX editing capability. Capability-detect per app and
+  maintain a fallback matrix, or allowlist known-good apps?
+- *Concurrent-typing races*: if the user keeps typing while a correction
+  lands, who wins? Abort rules vs. operational-transform-style rebasing of
+  the correction against their edits.
+- *Prefix-stable generation*: can the cleanup LLM be constrained to
+  append-mostly output (rather than free rewrites) so corrections shrink to
+  small suffix patches?
