@@ -8,6 +8,7 @@ public final class HotkeyMonitor {
     private var tap: CFMachPort?
     private var pressedAt: Date?
     private static let rightCmdKeycode: Int64 = 54
+    private static let rightCmdDeviceMask: UInt64 = 0x10  // NX_DEVICERCMDKEYMASK: right-Cmd's own device bit
 
     public init() {}
 
@@ -41,7 +42,7 @@ public final class HotkeyMonitor {
             return
         }
         guard event.getIntegerValueField(.keyboardEventKeycode) == Self.rightCmdKeycode else { return }
-        let isDown = event.flags.contains(.maskCommand)
+        let isDown = event.flags.rawValue & Self.rightCmdDeviceMask != 0
         if isDown, pressedAt == nil {
             pressedAt = Date()
             onPress?()
