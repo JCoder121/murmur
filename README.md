@@ -30,6 +30,13 @@ On first run grant **Microphone** and **Accessibility** permissions
   (start it with `ollama serve`).
 - Say "give me the following in English: {Chinese}" to dictate Chinese and
   insert the English translation.
+- **Personal dictionary**: put your proper nouns (project names, tools, people)
+  one per line in `~/Library/Application Support/WisprClone/dictionary.txt`
+  (`#` comments OK). Terms bias whisper's transcription in **both modes** and
+  qwen's spelling in Smart mode. Re-read on every dictation — no relaunch.
+- Smart mode adapts tone to the destination app (chat apps → casual,
+  terminals/editors → verbatim, everything else → prose) using the frontmost
+  app name + window title captured at key-press. No field content is read.
 
 ## Notes
 
@@ -62,8 +69,9 @@ Manual E2E run on the target MacBook Air M1 (8GB) — see `E2E-CHECKLIST.md`.
 
 ## Future ideas (v2+)
 
-- **Context injection** (planned next): feed frontmost-app name, surrounding
-  text, and a personal dictionary into whisper + the cleanup prompt.
+- ~~Context injection~~ — shipped in v2 (dictionary → whisper `initial_prompt`,
+  app context + tone buckets → cleanup prompt). Extend the bucket map in
+  `AppContext.swift` to teach it new chat/code apps.
 - Stream-draft overlay via a small whisper model while speaking; token-streamed
   overlay for Smart mode. Deferred until better hardware — both keep extra
   models resident, which fights real workloads on 8GB.

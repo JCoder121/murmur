@@ -14,6 +14,8 @@ public final class AppController: NSObject {
     private var idleTimer: Timer?
     private var recording = false
     private var processing = false
+    private let dictionary = PersonalDictionary()
+    private var dictationContext: AppContext?
 
     public func start() {
         buildMenu()
@@ -78,11 +80,16 @@ public final class AppController: NSObject {
         case .rules:
             return rules
         case .smart:
-            return OllamaCleaner(fallback: rules, onFallback: {
-                DispatchQueue.main.async { [weak self] in
-                    self?.overlay.showWarning("Ollama down — used rules mode")
-                }
-            })
+            return OllamaCleaner(
+                fallback: rules,
+                onFallback: {
+                    DispatchQueue.main.async { [weak self] in
+                        self?.overlay.showWarning("Ollama down — used rules mode")
+                    }
+                },
+                contextProvider: { [weak self] in
+                    (self?.dictationContext, self?.dictionary.terms ?? [])
+                })
         }
     }
 
@@ -91,6 +98,7 @@ public final class AppController: NSObject {
     private func hotkeyPressed() {
         guard !recording else { return }
         guard !processing else { overlay.showWarning("Busy…"); return }
+        dictationContext = AppContext.capture()  // frontmost app now = paste target
         recording = true
         idleTimer?.invalidate()
         statusItem.button?.title = "🔴"
@@ -132,7 +140,8 @@ public final class AppController: NSObject {
             }
             do {
                 try await self.whisper.ensureRunning()
-                let raw = try await self.whisper.transcribe(wav: wav, language: Settings.language)
+                let raw = try await self.whisper.transcribe(
+                    wav: wav, language: Settings.language, prompt: self.dictionary.initialPrompt)
                 try? FileManager.default.removeItem(at: wav)
                 guard !raw.isEmpty else {
                     await MainActor.run { self.overlay.hide() }
