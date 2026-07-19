@@ -5,6 +5,7 @@ public final class Overlay {
     private let panel: NSPanel
     private let label = NSTextField(labelWithString: "")
     private let dot = NSView(frame: NSRect(x: 0, y: 0, width: 14, height: 14))
+    private var hideWork: DispatchWorkItem?
 
     public init() {
         panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 220, height: 40),
@@ -48,8 +49,16 @@ public final class Overlay {
         panel.orderFrontRegardless()
     }
 
-    public func showRecording() { show(text: "Listening…", dotColor: .systemRed) }
-    public func showProcessing() { show(text: "Processing…", dotColor: .systemYellow) }
+    public func showRecording() {
+        hideWork?.cancel()
+        hideWork = nil
+        show(text: "Listening…", dotColor: .systemRed)
+    }
+    public func showProcessing() {
+        hideWork?.cancel()
+        hideWork = nil
+        show(text: "Processing…", dotColor: .systemYellow)
+    }
 
     public func updateLevel(_ level: Float) {
         let scale = 1.0 + CGFloat(min(1, max(0, level)))
@@ -57,9 +66,17 @@ public final class Overlay {
     }
 
     public func showWarning(_ message: String) {
+        hideWork?.cancel()
+        hideWork = nil
         show(text: message, dotColor: .systemOrange)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in self?.hide() }
+        let work = DispatchWorkItem { [weak self] in self?.hide() }
+        hideWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: work)
     }
 
-    public func hide() { panel.orderOut(nil) }
+    public func hide() {
+        hideWork?.cancel()
+        hideWork = nil
+        panel.orderOut(nil)
+    }
 }
