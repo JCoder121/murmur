@@ -1,5 +1,5 @@
 import XCTest
-@testable import WisprCloneCore
+@testable import ChirpCore
 
 final class PersonalDictionaryTests: XCTestCase {
     private func tempFile(_ contents: String?) throws -> URL {

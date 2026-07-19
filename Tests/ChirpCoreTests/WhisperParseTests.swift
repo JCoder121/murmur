@@ -1,5 +1,5 @@
 import XCTest
-@testable import WisprCloneCore
+@testable import ChirpCore
 
 final class WhisperParseTests: XCTestCase {
     func testParsesTextField() throws {

@@ -73,7 +73,7 @@ public final class Recorder {
         lock.lock(); let captured = samples; samples = []; lock.unlock()
         guard captured.count > 8000 else { return nil }  // < 0.5s: discard
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("wispr-\(UUID().uuidString).wav")
+            .appendingPathComponent("chirp-\(UUID().uuidString).wav")
         try WAVWriter.write(samples: captured, sampleRate: 16000, to: url)
         return url
     }

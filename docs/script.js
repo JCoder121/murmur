@@ -1,5 +1,5 @@
 /* =========================================================
-   Murmur site — theme, reveals, copy, hero demo loop
+   Chirp site — theme, reveals, copy, hero demo loop
    ========================================================= */
 (function () {
   "use strict";
@@ -8,7 +8,7 @@
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* ---------- theme ---------- */
-  var STORE_KEY = "murmur-theme";
+  var STORE_KEY = "chirp-theme";
   var toggle = document.getElementById("themeToggle");
 
   function applyTheme(theme) {
@@ -55,7 +55,7 @@
   /* ---------- copy button ---------- */
   var copyBtn = document.getElementById("copyBtn");
   var INSTALL_CMD =
-    "git clone https://github.com/jcoder121/murmur && cd murmur && ./scripts/setup.sh && make run";
+    "git clone https://github.com/jcoder121/chirp && cd chirp && ./scripts/setup.sh && make run";
 
   if (copyBtn) {
     var label = copyBtn.querySelector(".copy-btn__label");

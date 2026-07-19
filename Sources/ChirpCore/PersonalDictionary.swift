@@ -5,7 +5,7 @@ import Foundation
 public final class PersonalDictionary {
     public static let defaultFileURL = FileManager.default
         .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        .appendingPathComponent("WisprClone/dictionary.txt")
+        .appendingPathComponent("Chirp/dictionary.txt")
 
     private let fileURL: URL
     private var cachedTerms: [String] = []

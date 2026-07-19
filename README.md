@@ -1,13 +1,12 @@
-# Murmur
+# Chirp
 
 Local, offline smart dictation for macOS. Hold **Right-Cmd**, speak English /
 Mandarin / a mix, release — clean **English text** is pasted at your cursor.
 
 An open-source homage to the Wispr Flow genre of dictation tools — built
-from scratch, fully local, not affiliated with Wispr. (Started life as
-"wispr_clone"; internal identifiers like the `com.jeffrey.wisprclone` bundle
-id and the `WisprClone Dev` signing cert keep the old name so existing
-permission grants survive.)
+from scratch, fully local, not affiliated with Wispr. (Started life as "wispr_clone",
+briefly "Murmur"; fully renamed to Chirp 2026-07-19 — bundle id
+`com.jeffrey.chirp`, signing cert `Chirp Dev`.)
 
 Built for a MacBook Air M1 (8GB): whisper large-v3-turbo (quantized, Metal)
 for speech recognition, Qwen2.5-3B via Ollama for cleanup + Chinese→English
@@ -18,7 +17,7 @@ translation, with an instant rules-only fallback mode.
 ```bash
 ./scripts/setup.sh   # installs whisper-cpp (~15MB), whisper model (~547MB),
                      # optionally Ollama + qwen2.5:3b (~2.5GB, Smart mode only)
-make run             # builds dist/WisprClone.app and opens it
+make run             # builds dist/Chirp.app and opens it
 ```
 
 On first run grant **Microphone** and **Accessibility** permissions
@@ -40,7 +39,7 @@ On first run grant **Microphone** and **Accessibility** permissions
 - Say "give me the following in English: {Chinese}" to dictate Chinese and
   insert the English translation.
 - **Personal dictionary**: put your proper nouns (project names, tools, people)
-  one per line in `~/Library/Application Support/WisprClone/dictionary.txt`
+  one per line in `~/Library/Application Support/Chirp/dictionary.txt`
   (`#` comments OK). Terms bias whisper's transcription in **both modes** and
   qwen's spelling in Smart mode. Re-read on every dictation — no relaunch.
 - Smart mode adapts tone to the destination app (chat apps → casual,
@@ -53,7 +52,7 @@ On first run grant **Microphone** and **Accessibility** permissions
 - Insertion uses clipboard + Cmd-V; your previous clipboard **string** is
   restored ~0.3s later (images/rich content are not restored).
 - Recording caps at 2 minutes per dictation. Holds under 0.3s are ignored.
-- The app is signed with the "WisprClone Dev" self-signed cert (created in the
+- The app is signed with the "Chirp Dev" self-signed cert (created in the
   login keychain) so Accessibility grants survive rebuilds. Without the cert it
   falls back to ad-hoc signing, where every rebuild silently invalidates the
   grant — toggle it off/on in System Settings and relaunch.
@@ -62,7 +61,7 @@ On first run grant **Microphone** and **Accessibility** permissions
 
 ```bash
 swift test    # unit tests
-make bundle   # build dist/WisprClone.app without launching
+make bundle   # build dist/Chirp.app without launching
 ```
 
 ## v1 acceptance (2026-07-19)

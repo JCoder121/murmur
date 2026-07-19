@@ -1,5 +1,5 @@
 import XCTest
-@testable import WisprCloneCore
+@testable import ChirpCore
 
 final class OllamaCleanerTests: XCTestCase {
     func testBuildBodyContainsModelPromptAndTranscript() throws {

@@ -1,7 +1,7 @@
 import Foundation
 
 public final class WhisperServer {
-    public static let modelPath = ("~/Library/Application Support/WisprClone/models/ggml-large-v3-turbo-q5_0.bin" as NSString).expandingTildeInPath
+    public static let modelPath = ("~/Library/Application Support/Chirp/models/ggml-large-v3-turbo-q5_0.bin" as NSString).expandingTildeInPath
     private static let binaryCandidates = ["/opt/homebrew/bin/whisper-server", "/usr/local/bin/whisper-server"]
     private static let base = URL(string: "http://127.0.0.1:8642")!
 
@@ -69,7 +69,7 @@ public final class WhisperServer {
     }
 
     public func transcribe(wav: URL, language: Language = .auto, prompt: String = "") async throws -> String {
-        let boundary = "wisprclone-\(UUID().uuidString)"
+        let boundary = "chirp-\(UUID().uuidString)"
         var req = URLRequest(url: Self.base.appendingPathComponent("inference"))
         req.httpMethod = "POST"
         req.timeoutInterval = 120

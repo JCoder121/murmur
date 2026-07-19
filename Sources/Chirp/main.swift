@@ -1,5 +1,5 @@
 import AppKit
-import WisprCloneCore
+import ChirpCore
 
 let app = NSApplication.shared
 let delegate = AppDelegate()

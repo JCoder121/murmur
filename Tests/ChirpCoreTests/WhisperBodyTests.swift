@@ -1,5 +1,5 @@
 import XCTest
-@testable import WisprCloneCore
+@testable import ChirpCore
 
 final class WhisperBodyTests: XCTestCase {
     private func bodyString(prompt: String) -> String {

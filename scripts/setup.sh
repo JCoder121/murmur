@@ -3,7 +3,7 @@
 # Prints disk cost and asks before every download (machine has limited free space).
 set -euo pipefail
 
-MODEL_DIR="$HOME/Library/Application Support/WisprClone/models"
+MODEL_DIR="$HOME/Library/Application Support/Chirp/models"
 MODEL_FILE="$MODEL_DIR/ggml-large-v3-turbo-q5_0.bin"
 MODEL_URL="https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q5_0.bin"
 

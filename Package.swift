@@ -2,11 +2,11 @@
 import PackageDescription
 
 let package = Package(
-    name: "WisprClone",
+    name: "Chirp",
     platforms: [.macOS(.v14)],
     targets: [
-        .target(name: "WisprCloneCore"),
-        .executableTarget(name: "WisprClone", dependencies: ["WisprCloneCore"]),
-        .testTarget(name: "WisprCloneCoreTests", dependencies: ["WisprCloneCore"]),
+        .target(name: "ChirpCore"),
+        .executableTarget(name: "Chirp", dependencies: ["ChirpCore"]),
+        .testTarget(name: "ChirpCoreTests", dependencies: ["ChirpCore"]),
     ]
 )

@@ -53,7 +53,7 @@ public final class AppController: NSObject {
         menu.addItem(langAutoItem)
         menu.addItem(langEnItem)
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Quit WisprClone", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: "Quit Chirp", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
         refreshChecks()
     }
