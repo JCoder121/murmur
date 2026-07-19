@@ -116,8 +116,6 @@ leave the whisper *model* alone — invest that headroom in the streaming overla
 
 ### Open design questions
 
-Things I'm actively thinking about for the deferred features:
-
 **Stream-draft overlay** (small model drafts live, large model finalizes)
 - *Stable-prefix rendering*: overlapping windows make the draft's tail
   flicker as re-decodes revise it. Only render tokens that survive N
