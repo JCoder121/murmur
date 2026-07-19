@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Murmur — local dictation for macOS</title>
+  <meta name="description" content="Local, offline dictation for macOS. Hold Right-Cmd, speak English or Mandarin, release — clean English text at your cursor. Audio never leaves your Mac." />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%A4%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+  <header class="masthead">
+    <a class="wordmark" href="#top" aria-label="Murmur — home">
+      <svg class="wordmark__mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="9" y="2" width="6" height="12" rx="3"/>
+        <path d="M5 11a7 7 0 0 0 14 0"/>
+        <path d="M12 18v3"/>
+      </svg>
+      Murmur
+    </a>
+
+    <nav class="masthead__nav">
+      <a class="navlink" href="https://github.com/jcoder121/murmur" target="_blank" rel="noopener">Source</a>
+      <button class="theme-toggle" id="themeToggle" type="button" role="switch" aria-checked="true" aria-label="Toggle light and dark theme">
+        <span class="theme-toggle__track">
+          <span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">☀</span>
+          <span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">☾</span>
+          <span class="theme-toggle__thumb"></span>
+        </span>
+      </button>
+    </nav>
+  </header>
+
+  <main id="top">
+    <!-- ============ HERO ============ -->
+    <section class="hero">
+      <p class="eyebrow reveal">Offline dictation · macOS · Apple&nbsp;Silicon</p>
+      <h1 class="hero__title reveal">Speak&nbsp;messy.<br />Land&nbsp;clean.</h1>
+      <p class="hero__lede reveal">
+        Hold Right-Cmd, murmur under your breath, release. Fillers, false starts,
+        even a slip into Mandarin become clean English — pasted right where your
+        cursor sits. Every millisecond of audio stays on your Mac.
+      </p>
+
+      <!-- ===== the centerpiece: the transform, in type ===== -->
+      <div class="demo reveal" id="demo" aria-hidden="true">
+        <div class="demo__live">
+          <span class="keycap" id="keycap">
+            <span class="keycap__glyph">⌘</span>
+            <span class="keycap__label">hold right-cmd</span>
+          </span>
+          <span class="waveform" id="waveform">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </span>
+          <span class="demo__status" id="statusLabel">Ready</span>
+        </div>
+
+        <div class="demo__io">
+          <p class="io__label">You say</p>
+          <p class="io__raw" id="heardText"></p>
+
+          <span class="io__arrow" aria-hidden="true">&darr;</span>
+
+          <p class="io__label io__label--accent">Murmur writes</p>
+          <p class="io__clean"><span id="composerText"></span><span class="caret" id="caret"></span></p>
+        </div>
+      </div>
+
+      <div class="hero__actions reveal">
+        <a class="cta" href="#install">Install it</a>
+        <a class="textlink" href="#features">How it works</a>
+      </div>
+      <p class="hero__note reveal">~2s from release to clean text on an M1. No cloud, no account, no telemetry.</p>
+    </section>
+
+    <!-- ============ FEATURES ============ -->
+    <section class="features" id="features">
+      <div class="section-head reveal">
+        <p class="eyebrow">What it does</p>
+        <h2 class="section-title">Small footprint, opinionated behavior.</h2>
+      </div>
+
+      <div class="grid">
+        <article class="item reveal">
+          <p class="item__kicker">Private</p>
+          <h3 class="item__title">100% local</h3>
+          <p class="item__body">Whisper large-v3-turbo runs quantized on Metal, on-device. Audio is transcribed on your Mac and never touches a network.</p>
+        </article>
+
+        <article class="item reveal">
+          <p class="item__kicker">Anywhere</p>
+          <h3 class="item__title">Hold to talk</h3>
+          <p class="item__body">Hold Right-Cmd, speak, release. Text pastes at your cursor in any app; your previous clipboard is restored a moment later.</p>
+        </article>
+
+        <article class="item reveal">
+          <p class="item__kicker">Bilingual</p>
+          <h3 class="item__title">English + 中文 → English</h3>
+          <p class="item__body">Speak either or mix. Qwen2.5-3B via Ollama cleans fillers and translates. Prefer instant? A rules-only mode skips the model.</p>
+        </article>
+
+        <article class="item reveal">
+          <p class="item__kicker">Context</p>
+          <h3 class="item__title">Knows your words</h3>
+          <p class="item__body">A personal dictionary keeps project names spelled right. Tone adapts to the app — casual in chat, verbatim in terminals.</p>
+        </article>
+      </div>
+
+      <p class="features__foot reveal">
+        Honest numbers on a MacBook Air M1 (8GB): about <strong>2.1s</strong> end-to-end for
+        English, ~4.1s with Mandarin auto-detect. The model loads on first use and unloads
+        after 10 minutes idle to give your RAM back.
+      </p>
+    </section>
+
+    <!-- ============ INSTALL ============ -->
+    <section class="install" id="install">
+      <div class="section-head reveal">
+        <p class="eyebrow">Get it running</p>
+        <h2 class="section-title">One clone, one script, one command.</h2>
+      </div>
+
+      <div class="cmd reveal">
+        <button class="cmd__copy" id="copyBtn" type="button" aria-label="Copy install command"><span class="cmd__copy-label">Copy</span></button>
+        <pre class="cmd__code"><code><span class="tk-prompt">$</span> <span class="tk-cmd">git clone</span> https://github.com/jcoder121/murmur <span class="tk-op">&amp;&amp;</span> <span class="tk-cmd">cd</span> murmur <span class="tk-op">&amp;&amp;</span> ./scripts/setup.sh <span class="tk-op">&amp;&amp;</span> <span class="tk-cmd">make</span> run</code></pre>
+      </div>
+
+      <p class="install__note reveal">
+        <code>setup.sh</code> fetches whisper-cpp and the model (~550&nbsp;MB) and, for Smart
+        mode, optionally installs Ollama + qwen2.5:3b. On first launch, grant
+        <strong>Microphone</strong> and <strong>Accessibility</strong> in System Settings,
+        then relaunch. That's the whole ceremony.
+      </p>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="colophon">
+    <a class="colophon__gh" href="https://github.com/jcoder121/murmur" target="_blank" rel="noopener">github.com/jcoder121/murmur</a>
+    <p class="colophon__line">An open-source homage to the Wispr Flow genre of dictation tools. Not affiliated with Wispr.</p>
+    <p class="colophon__line colophon__line--mute">Built on a MacBook Air M1.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
