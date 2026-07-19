@@ -17,6 +17,8 @@ bundle: build
 	mkdir -p $(BUNDLE)/Contents/MacOS
 	cp $(BIN) $(BUNDLE)/Contents/MacOS/$(APP)
 	cp Resources/Info.plist $(BUNDLE)/Contents/Info.plist
+	mkdir -p $(BUNDLE)/Contents/Resources
+	cp Resources/AppIcon.icns $(BUNDLE)/Contents/Resources/
 	codesign --force -s "$(SIGN_ID)" --identifier com.jeffrey.chirp $(BUNDLE)
 
 run: bundle
