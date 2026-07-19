@@ -1,7 +1,13 @@
-# wispr_clone
+# Murmur
 
 Local, offline smart dictation for macOS. Hold **Right-Cmd**, speak English /
 Mandarin / a mix, release — clean **English text** is pasted at your cursor.
+
+An open-source homage to the Wispr Flow genre of dictation tools — built
+from scratch, fully local, not affiliated with Wispr. (Started life as
+"wispr_clone"; internal identifiers like the `com.jeffrey.wisprclone` bundle
+id and the `WisprClone Dev` signing cert keep the old name so existing
+permission grants survive.)
 
 Built for a MacBook Air M1 (8GB): whisper large-v3-turbo (quantized, Metal)
 for speech recognition, Qwen2.5-3B via Ollama for cleanup + Chinese→English
