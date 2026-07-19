@@ -3,6 +3,7 @@ import AppKit
 public final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private let hotkey = HotkeyMonitor()
+    private var recorder: Recorder?
 
     public override init() { super.init() }
 
@@ -16,10 +17,17 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             let opts = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
             AXIsProcessTrustedWithOptions(opts)
         }
-        hotkey.onPress = { [weak self] in self?.statusItem.button?.title = "🔴" }
+        Recorder.requestMicPermission()
+        let recorder = Recorder()
+        self.recorder = recorder
+        hotkey.onPress = { [weak self] in
+            self?.statusItem.button?.title = "🔴"
+            try? recorder.start()
+        }
         hotkey.onRelease = { [weak self] held in
             self?.statusItem.button?.title = "🎤"
-            NSLog("hotkey held %.2fs", held)
+            let url = try? recorder.stop()
+            NSLog("held %.2fs, wav: %@", held, url?.path ?? "nil")
         }
         if !hotkey.start() {
             NSLog("HotkeyMonitor: event tap failed — grant Accessibility and relaunch")
