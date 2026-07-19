@@ -53,11 +53,9 @@ make bundle   # build dist/WisprClone.app without launching
 
 Manual E2E run on the target MacBook Air M1 (8GB) — see `E2E-CHECKLIST.md`.
 
-- Items 1–9, 11–13: **PASS** (setup, rules mode, smart mode incl. zh→en,
-  Ollama-down fallback, clipboard restore, busy/too-short pills, quit cleanup).
-- Item 10 (10-min idle unload): **deferred** — timer resets on every dictation
-  and the app was in constant use during the run; unload path is unit-covered
-  and quit cleanup (item 11) passed.
+- All 13 items: **PASS** (setup, rules mode, smart mode incl. zh→en,
+  Ollama-down fallback, clipboard restore, busy/too-short pills, quit cleanup,
+  10-min idle unload verified by background watcher).
 - Found & fixed during the run: stale-instance hotkey failure after rebuild
   (ad-hoc TCC invalidation → now self-signed), 2x latency from language
   auto-detect (→ language toggle).

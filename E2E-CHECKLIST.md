@@ -19,7 +19,7 @@
 ## Step 3 — Failure modes
 - [x] 8. `pkill ollama`, Smart mode → still works via rules; "Ollama down" warning pill
 - [x] 9. Copy "KEEP" → dictate something → wait 1s → Cmd-V → "KEEP" pastes (clipboard restored)
-- [ ] 10. Wait 10+ min → `pgrep whisper-server` empty (idle unload) → dictate again → works (~2s first-word delay)
+- [x] 10. Wait 10+ min → `pgrep whisper-server` empty (idle unload) → dictate again → works (~2s first-word delay)
 
 ## Extra probes (from final review)
 - [x] 11. Quit app → `pgrep whisper-server` empty (quit cleanup)
