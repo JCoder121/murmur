@@ -32,7 +32,12 @@ public final class Recorder {
             self?.consume(buffer, converter: converter, outFormat: outFormat)
         }
         engine.prepare()
-        try engine.start()
+        do {
+            try engine.start()
+        } catch {
+            input.removeTap(onBus: 0)
+            throw error
+        }
     }
 
     private func consume(_ buffer: AVAudioPCMBuffer, converter: AVAudioConverter, outFormat: AVAudioFormat) {
