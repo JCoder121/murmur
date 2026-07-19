@@ -26,9 +26,12 @@ On first run grant **Microphone** and **Accessibility** permissions
 
 ## Use
 
-- Hold **Right-Cmd** → speak → release. Text appears at your cursor.
-- Menu-bar 🎤 → switch **Smart mode** (LLM cleanup, zh→en translation) vs
-  **Rules mode** (instant, filler-stripping only, no translation).
+- Hold **Right-Cmd** → speak → release: **Rules mode** (instant regex cleanup,
+  EN only). Text appears at your cursor.
+- Hold **Right-Cmd + Right-Opt** → **Smart mode** (LLM cleanup, zh→en
+  translation, symbol conversion). Add Right-Opt any time during the hold —
+  the menu-bar icon turns 🟣 and qwen starts loading immediately, so the
+  ~7.5s cold load overlaps your speech instead of following it.
 - Menu-bar 🎤 → **Language: Auto (EN+中文)** vs **English (faster)**.
   Auto-detect costs a full extra whisper pass (~4.1s vs ~2.1s measured on M1);
   pick English if you're not dictating Mandarin.

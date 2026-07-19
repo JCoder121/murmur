@@ -65,6 +65,22 @@ public final class OllamaCleaner: Cleaner {
         return try! JSONSerialization.data(withJSONObject: payload)
     }
 
+    /// Fire-and-forget 1-token generation to pull the model into memory.
+    /// Called on chord-engage so the ~7.5s cold load overlaps speech + whisper.
+    public static func warmUp(endpoint: URL = URL(string: "http://127.0.0.1:11434/api/chat")!,
+                              model: String = "qwen2.5:3b") {
+        var req = URLRequest(url: endpoint)
+        req.httpMethod = "POST"
+        req.timeoutInterval = 30
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: [
+            "model": model, "stream": false,
+            "messages": [["role": "user", "content": "hi"]],
+            "options": ["num_predict": 1],
+        ])
+        URLSession.shared.dataTask(with: req).resume()
+    }
+
     static func parse(_ data: Data) throws -> String {
         struct Response: Decodable {
             struct Message: Decodable { let content: String }
