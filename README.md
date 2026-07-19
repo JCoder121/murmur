@@ -75,6 +75,35 @@ Manual E2E run on the target MacBook Air M1 (8GB) — see `E2E-CHECKLIST.md`.
   (ad-hoc TCC invalidation → now self-signed), 2x latency from language
   auto-detect (→ language toggle).
 
+## Scaling up on more RAM (e.g. 32GB+)
+
+Chirp's current models were sized for an 8GB M1, where both are aggressively
+unloaded (qwen after ~5 min via Ollama's default, whisper after 10 min). On a
+bigger machine the wins come in this order:
+
+1. **Bump the cleanup LLM — biggest quality win.** qwen2.5:3b is the weak link;
+   the cleanup/translation quality (grammar, zh→en, context/tone) scales
+   directly with model size. Pull a larger one and point Chirp at it via the
+   `model:` arg in `OllamaCleaner.init` (default `qwen2.5:3b`):
+   - 16GB → `qwen2.5:7b` (Q4 ~4.7GB)
+   - 32GB → `qwen2.5:14b` (Q4 ~9GB) — sweet spot; noticeably better zh→en.
+   - 32GB+ headroom → `qwen2.5:32b` (Q4 ~20GB) works but crowds real workloads.
+2. **Keep models resident — kills the cold-load latency, not accuracy.** With
+   spare RAM you don't need the offload dance. Set Ollama `keep_alive: -1` (or a
+   long value) in the request options so qwen stays pinned, and lengthen /
+   disable the 10-min whisper idle timer (`scheduleIdleUnload`, 600s). First
+   dictation after idle then loads instantly instead of eating the ~7.5s cold
+   load.
+3. **Whisper: don't bother with a bigger model — spend the RAM on streaming.**
+   large-v3-turbo is already near the accuracy ceiling; a full large-v3 is ~3x
+   slower for a marginal gain. The real upgrade is the deferred **stream-draft
+   overlay** below — keep a small model (base.en/small) resident for live
+   drafts while large-v3-turbo finalizes. That's a latency/UX win the 8GB box
+   couldn't afford, not a transcription-accuracy one.
+
+TL;DR: upgrade **qwen** for quality, keep **both** resident for speed, and
+leave the whisper *model* alone — invest that headroom in the streaming overlay.
+
 ## Future ideas (v2+)
 
 - ~~Context injection~~ — shipped in v2 (dictionary → whisper `initial_prompt`,
